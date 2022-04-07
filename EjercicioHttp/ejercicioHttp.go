@@ -1,10 +1,9 @@
-package main
+package categories
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"ioutil"
 	"net/http"
 )
 
@@ -15,23 +14,30 @@ type Category struct {
 	Name string `json:"name"`
 }
 
-func GetCategories(siteID string) (Categories, error) {
-	response := http.Get // completar
-
-	bytes := ioutil.ReadAll(response.bytes) //completar
-
-	var cats Categories
-	err := json.Unmarshal(bytes, &cats) //completar
-	return cats, nil
+func (category Category) String() string {
+	return fmt.Sprintf(" - %s: %s", category.ID, category.Name)
 }
-func main() {
 
-	url := "https://api.mercadolibre.com/sites/MLA/categories"
-	body := ""
-
-	cats, err := GetCategories("MLA")
+func GetCategories(siteID string) (Categories, error) {
+	response, err := http.Get(getURL(siteID))
 	if err != nil {
-		//validar
+		return Categories{}, err
 	}
-	fmt.Println("Las categorias son....")
+	bytes, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return Categories{}, err
+	}
+	return parseCategories(bytes)
+}
+
+func getURL(siteID string) string {
+	return fmt.Sprintf("https://api.mercadolibre.com/sites/%s/categories", siteID)
+}
+
+func parseCategories(bytes []byte) (Categories, error) {
+	var cats Categories
+	if err := json.Unmarshal(bytes, &cats); err != nil {
+		return Categories{}, err
+	}
+	return cats, nil
 }
